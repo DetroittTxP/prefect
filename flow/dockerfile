@@ -1,0 +1,10 @@
+FROM python:3.12
+
+WORKDIR /app
+
+RUN pip install prefect==2.20.16
+
+
+COPY . .
+
+CMD ["python", "app.py"]

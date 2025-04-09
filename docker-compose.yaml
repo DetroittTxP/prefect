@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:15.0
+    environment:
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: prefect
+      POSTGRES_DB: prefect
+    volumes:
+      - prefect_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+    networks:
+      - prefect_network
+
+  prefect:
+    image: prefecthq/prefect:2-python3.12
+    restart: always
+    volumes:
+      - prefect:/root/.prefect
+    entrypoint: ["prefect", "server", "start"]
+    environment:
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_UI_URL=http://localhost:4200
+      - PREFECT_API_URL=http://localhost:4200/api
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
+      - PREFECT_API_DATABASE_ECHO=False
+      - PREFECT_API_DATABASE_MIGRATE_ON_START=True
+    ports:
+      - 4200:4200
+    networks:
+      - prefect_network
+
+  python-app:
+    build:
+      context: flow
+      dockerfile: dockerfile
+    volumes:
+      - ./flow/source:/app
+    depends_on:
+      - prefect
+    environment:
+      - PREFECT_API_URL=http://prefect:4200/api
+    networks:
+      - prefect_network
+
+volumes:
+  prefect_pgdata:
+    driver: local
+  prefect:
+    driver: local
+
+networks:
+  prefect_network:
+    # driver: bridge
