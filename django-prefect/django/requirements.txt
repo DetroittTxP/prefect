@@ -1,0 +1,12 @@
+Django==5.1
+django-prometheus
+django_ace
+django-filter
+djangorestframework
+django-cors-headers==4.4.0
+django-storages
+
+environs==11.0.0
+psycopg[binary]
+
+prefect==3.3.4.dev2

@@ -1,0 +1,32 @@
+services:
+  task-1:
+    container_name: task-1
+    build:
+      context: flow
+      dockerfile: dockerfile.task
+    environment:
+      - PREFECT_API_URL=http://prefect:4200/api
+    command: python /app/tasks/task_1.py
+    volumes:
+      - ./flow/source/flowtask:/app/tasks
+    networks:
+      - prefect_network
+    depends_on:
+      - prefect
+      - postgres
+
+  task-2:
+    container_name: task-2
+    build:
+      context: flow
+      dockerfile: dockerfile.task
+    environment:
+      - PREFECT_API_URL=http://prefect:4200/api
+    command: python /app/tasks/task_2.py
+    volumes:
+      - ./flow/source/flowtask:/app/tasks
+    networks:
+      - prefect_network
+    depends_on:
+      - prefect
+      - postgres

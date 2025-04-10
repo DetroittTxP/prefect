@@ -1,0 +1,9 @@
+@url = http://flask-app:5000
+
+
+### basic
+GET {{url}}/basic-run-flow HTTP 1.1
+
+
+###  bg task
+GET {{url}}/background-task HTTP 1.1 

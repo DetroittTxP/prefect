@@ -1,6 +1,10 @@
+include:
+  - docker-compose-tasks.yaml
+
 services:
   postgres:
     image: postgres:15.0
+    container_name: prefect-postgres
     environment:
       POSTGRES_USER: prefect
       POSTGRES_PASSWORD: prefect
@@ -8,17 +12,18 @@ services:
     volumes:
       - prefect_pgdata:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
     networks:
       - prefect_network
 
   prefect:
-    image: prefecthq/prefect:2-python3.12
+    image: prefecthq/prefect:3.3.4.dev2-python3.12-conda
+    container_name: prefect-server
     restart: always
     volumes:
       - prefect:/root/.prefect
-    entrypoint: ["prefect", "server", "start"]
+    command: ["prefect", "server", "start"]
     environment:
       - PREFECT_SERVER_API_HOST=0.0.0.0
       - PREFECT_UI_URL=http://localhost:4200
@@ -30,17 +35,25 @@ services:
       - 4200:4200
     networks:
       - prefect_network
+    depends_on:
+      - postgres
 
-  python-app:
+  flask-app:
+    container_name: flask-app
     build:
       context: flow
       dockerfile: dockerfile
     volumes:
       - ./flow/source:/app
+    user: 1000:1000
+    ports:
+      - "5000:5000"
+    command: flask --app app run --debug --host=0.0.0.0
     depends_on:
       - prefect
     environment:
       - PREFECT_API_URL=http://prefect:4200/api
+      - DB_URL=postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
     networks:
       - prefect_network
 

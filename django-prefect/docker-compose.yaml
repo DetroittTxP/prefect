@@ -1,0 +1,45 @@
+services:
+  database:
+    container_name: prefect-database
+    image: postgres:17.0
+    command: postgres -c 'max_connections=200'
+    environment:
+      - POSTGRES_DB=prefectapp
+      - POSTGRES_USER=prefect
+      - POSTGRES_PASSWORD=prefect
+    volumes:
+      - prefect_app_db:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prefect"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - prefect-django-app
+
+  core:
+    container_name: prefect-core
+    build:
+      context: django
+      dockerfile: dockerfile
+    user: 1000:1000
+    stdin_open: true
+    tty: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ${HOME}/.vscode-server-prefect-core:/home/vscode/.vscode-server
+    command: ./manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - database
+    networks:
+      - prefect-django-app
+volumes:
+  prefect_app_db:
+    driver: local
+
+networks:
+  prefect-django-app:
